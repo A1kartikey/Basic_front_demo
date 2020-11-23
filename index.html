@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Ethereum frontend</title>
+
+    <link rel="stylesheet" type="text/css" href="main.css">
+
+    <script src="./node_modules/web3/dist/web3.min.js"></script>
+
+    <link href="/favicon.ico" type="image/x-icon" rel="icon" />
+
+</head>
+<body>
+    <div class="container">
+
+        <h1>Instructor Information </h1>
+      
+        <h2 id="instructor"></h2>
+
+        <label for="name" class="col-lg-2 control-label">Instructor Name</label>
+        <input id="name" type="text">
+
+        <label for="age" class="col-lg-2 control-label">Instructor Age</label>
+        <input id="age" type="text">
+
+		<button id="button_setInstructor">Update Instructor</button>
+		
+		<button id="button_getInstructor">Get Instructor</button>
+
+        <button id="buttonEvent">Event</button>
+        
+
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+
+    <script>
+       if (typeof web3 !== 'undefined') {
+           web3 = new Web3(web3.currentProvider);
+       } else {
+           web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+       }
+
+	
+       web3.eth.defaultAccount = web3.eth.accounts[0];	    
+
+
+	   console.log(web3.eth.accounts[0]);
+	   console.log(web3.eth.Balance);
+
+       var InstructorContract = web3.eth.contract([
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "fname",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "age",
+				"type": "uint256"
+			}
+		],
+		"name": "Event",
+		"type": "event"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_fName",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_age",
+				"type": "uint256"
+			}
+		],
+		"name": "setInstructor",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getInstructor",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	}
+]);
+
+       var Instructor = InstructorContract.at('0x98a6b753b9f626c1d7c8a35b1a84b901b92a2fb8');
+
+       var Event = Instructor.Event({}, {fromBlock:7421045  ,toBlock:'latest'});
+
+	   $("#button_getInstructor").click(function() {
+
+		Instructor.getInstructor(function(error, result) {
+           if (!error) {
+               $("#instructor").html(result[0]+' ('+result[1]+' years old)');
+           } else
+                console.log(error);
+	   });
+	});
+
+       $("#button_setInstructor").click(function() {
+           
+        Instructor.setInstructor($("#name").val(), $("#age").val(), (err, res) => {
+        if (err){
+            console.log(err);
+            }    
+        })
+            
+        });
+
+        $("#buttonEvent").click(function() {
+        Event.watch(function(error, result) {
+
+           if (result) {
+               $("#instructor").append(result.args.fname +' : '  + result.args.age + ' years old'+'<br/>');
+		   console.log('Name: '+result.args.fname);
+		   console.log('Age: '+result.args.age);
+			
+			} else {
+                console.log(error);
+                }
+            })
+       });
+
+    </script>
+
+</body>
+</html>
